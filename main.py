@@ -18,14 +18,55 @@ def not_implemented():
 
 
 def load_data():
+    data = []
     with open(csv_path) as file:
         reader = csv.DictReader(file)
-        return [row for row in reader]
+        for row in reader:
+            row["edad"] = int(row["edad"])
+            data.append(row)
+
+    return data
 
 
 def get_student_by_city(data):
     city = input("Inserte la ciudad deseada: ")
+    # List comprehension
     return [student for student in data if student["ciudad"] == city]
+
+
+def get_student_by_country(data):
+    country = input("Inserte el pais deseado: ")
+    # List comprehension
+    return [student for student in data if student["pais"] == country]
+
+
+def get_student_by_age_range(data):
+    min_age = int(input("Edad minima: "))
+    max_age = int(input("Edad maxima: "))
+    # List comprehension
+    return [student for student in data if min_age <= student["edad"] <= max_age]
+
+
+def get_all_cities(data):
+    # Set comprehension
+    cities = {student["ciudad"] for student in data}
+
+    # List comprehension
+    return [{"ciudad": city} for city in cities]
+
+
+def get_average_age_by_career(data):
+    aux = {}
+    # Split ages by career
+    for student in data:
+        aux[student["carrera"]] = aux.get(student["carrera"], [])
+        aux[student["carrera"]].append(student["edad"])
+
+    # List comprehension
+    return [{"carrera": key, "edad_promedio": sum(value)/len(value)} for key, value in aux.items()]
+
+
+
 
 
 MENU = [
@@ -34,19 +75,19 @@ MENU = [
         "text": "Obtener todos los estudiantes que pertenezcan a una ciudad dada."
     },
     {
-        "method": not_implemented,
+        "method": get_student_by_country,
         "text": "Obtener todos los estudiantes que vivan en un país dado."
     },
     {
-        "method": not_implemented,
+        "method": get_student_by_age_range,
         "text": "Obtener todos los estudiantes que estén dentro del rango de edades dado."
     },
     {
-        "method": not_implemented,
+        "method": get_all_cities,
         "text": "Obtener todas las ciudades de residencia de los estudiantes."
     },
     {
-        "method": not_implemented,
+        "method": get_average_age_by_career,
         "text": "Identificar la edad promedio por carrera."
     },
     {
@@ -91,6 +132,9 @@ def show_results(results):
 
 
 def create_report(results, selected_option):
+    if not results:
+        return
+
     report_filename = f'{selected_option["method"].__name__}.csv'
     report_filepath = reports_path / report_filename
 
@@ -105,7 +149,9 @@ def create_report(results, selected_option):
 
 if __name__ == "__main__":
     csv_data = load_data()
-    show_menu()
-    selected_option = select_menu_option()
-    result = selected_option["method"](csv_data)
-    create_report(result, selected_option)
+    while True:
+        show_menu()
+        selected_option = select_menu_option()
+        result = selected_option["method"](csv_data)
+        show_results(result)
+        create_report(result, selected_option)
